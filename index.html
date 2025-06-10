@@ -30,6 +30,9 @@
     </style>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Adapter Luxon (para o tipo 'time' no Chart.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.x/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.x/dist/chartjs-adapter-luxon.min.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
     <div class="container">
@@ -38,7 +41,7 @@
         </h1>
 
         <div class="card">
-            <h2 class="text-xl font-semibold mb-4">Filtrar Dados por Período</h2>
+            <h2 class="text-xl font-semibold mb-4">Filtrar Dados por Período da Base de Dados</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label for="startDate" class="block text-sm font-medium text-gray-700">Data e Hora de Início:</label>
@@ -52,22 +55,33 @@
             <button id="filterBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
                 Aplicar Filtro
             </button>
+            <button id="resetFilterBtn" class="w-full mt-2 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out">
+                Mostrar Todos os Dados
+            </button>
+        </div>
+
+        <div class="card">
+            <h2 class="text-xl font-semibold mb-4">Analisar Ficheiro CSV</h2>
+            <p class="text-sm text-gray-600 mb-2">Selecione um ficheiro CSV para visualizar os dados no gráfico. (Os dados do CSV não serão guardados na base de dados.)</p>
+            <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none">
         </div>
 
         <div class="card">
             <h2 class="text-xl font-semibold mb-4">Gráfico de Decibéis ao Longo do Tempo</h2>
             <canvas id="decibelChart"></canvas>
-            <p id="loadingMessage" class="text-center text-gray-500 mt-4 hidden">Carregando dados...</p>
-            <p id="errorMessage" class="text-center text-red-500 mt-4 hidden">Erro ao carregar dados.</p>
-            <p id="noDataMessage" class="text-center text-gray-500 mt-4 hidden">Nenhum dado encontrado para o período selecionado.</p>
+            <p id="loadingMessage" class="text-center text-gray-500 mt-4 hidden">A carregar dados...</p>
+            <p id="errorMessage" class="text-center text-red-500 mt-4 hidden">Erro ao carregar dados. Verifique o URL do backend e se está a funcionar.</p>
+            <p id="noDataMessage" class="text-center text-gray-500 mt-4 hidden">Nenhum dado encontrado para o período selecionado ou no ficheiro CSV.</p>
         </div>
     </div>
 
     <script>
-        // Referência aos elementos HTML
+        // Referências aos elementos HTML
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
         const filterBtn = document.getElementById('filterBtn');
+        const resetFilterBtn = document.getElementById('resetFilterBtn');
+        const csvFileInput = document.getElementById('csvFileInput');
         const decibelChartCanvas = document.getElementById('decibelChart');
         const loadingMessage = document.getElementById('loadingMessage');
         const errorMessage = document.getElementById('errorMessage');
@@ -76,14 +90,11 @@
         let decibelChart; // Variável para armazenar a instância do gráfico
 
         // URL base do seu backend Flask (IMPORTANTE: substitua pelo URL do seu backend hospedado!)
-        // Se estiver a testar localmente, será algo como 'http://localhost:3000' (ou a porta que você configurou).
-        // Após a hospedagem num serviço como o Render, será o URL público do seu serviço.
         // Exemplo: 'https://seu-servico-flask.onrender.com'
-        const API_BASE_URL = 'https://3000-firebase-iotlunar-1748815570790.cluster-iesosxm5fzdewqvhlwn5qivgry.cloudworkstations.dev'; // <<<<<<< ATUALIZADO AQUI! <<<<<<<
+        const API_BASE_URL = 'https://3000-firebase-iotlunar-1748815570790.cluster-iesosxm5fzdewqvhlwn5qivgry.cloudworkstations.dev';
 
-        // Função para formatar a data para o input datetime-local
+        // Função para formatar a data para o input datetime-local (formato YYYY-MM-DDTHH:MM)
         function formatDatetimeLocal(date) {
-            // Garante que a data seja um objeto Date
             if (!(date instanceof Date)) {
                 date = new Date(date);
             }
@@ -95,17 +106,8 @@
             return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
-        // Define as datas padrão (últimas 24 horas, por exemplo)
-        function setInitialDateRange() {
-            const now = new Date();
-            const oneDayAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-
-            startDateInput.value = formatDatetimeLocal(oneDayAgo);
-            endDateInput.value = formatDatetimeLocal(now);
-        }
-
         // Função para buscar os dados da API
-        async function fetchDecibelData(startDate, endDate) {
+        async function fetchDecibelData(startDate = '', endDate = '') {
             loadingMessage.classList.remove('hidden');
             errorMessage.classList.add('hidden');
             noDataMessage.classList.add('hidden');
@@ -142,7 +144,7 @@
         }
 
         // Função para renderizar o gráfico usando Chart.js
-        function renderChart(data) {
+        function renderChart(data, label = 'Nível de Decibéis (dB)') {
             // Destrói o gráfico existente se houver um
             if (decibelChart) {
                 decibelChart.destroy();
@@ -165,7 +167,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Nível de Decibéis (dB)',
+                        label: label,
                         data: values,
                         borderColor: 'rgb(75, 192, 192)',
                         tension: 0.1,
@@ -179,12 +181,12 @@
                         x: {
                             type: 'time', // Usar tipo 'time' para datas
                             time: {
-                                unit: 'minute', // Adapta a unidade de tempo automaticamente
+                                unit: 'minute', // Adapta a unidade de tempo automaticamente (pode ser 'hour', 'day', etc.)
                                 displayFormats: {
                                     minute: 'HH:mm',
                                     hour: 'HH:mm',
                                     day: 'MMM dd',
-                                    month: 'MMM'
+                                    month: 'MMM yyyy'
                                 }
                             },
                             title: {
@@ -215,6 +217,57 @@
             });
         }
 
+        // Função para processar o ficheiro CSV
+        function processCsvFile(file) {
+            loadingMessage.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            noDataMessage.classList.add('hidden');
+            decibelChartCanvas.classList.add('hidden');
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const csvContent = event.target.result;
+                    const lines = csvContent.split('\n').filter(line => line.trim() !== ''); // Filtra linhas vazias
+                    const parsedData = [];
+
+                    lines.forEach(line => {
+                        // Regex para extrair valor e datetime (adaptado do seu backend)
+                        const match = line.match(/(\d+)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
+                        if (match && match.length >= 3) { // Deve ter pelo menos 3 grupos (o valor, a data, a hora)
+                            const value = parseFloat(match[1]);
+                            const dateTime = match[2]; // ex: 2025-06-05 19:59:49
+                            parsedData.push({ valor: value, data: dateTime });
+                        }
+                    });
+
+                    // Ordena os dados pela data
+                    parsedData.sort((a, b) => new Date(a.data) - new Date(b.data));
+
+                    loadingMessage.classList.add('hidden');
+                    if (parsedData.length > 0) {
+                        renderChart(parsedData, 'Dados do Ficheiro CSV (dB)');
+                    } else {
+                        noDataMessage.classList.remove('hidden');
+                        console.warn("Nenhum dado válido encontrado no ficheiro CSV.");
+                    }
+                } catch (e) {
+                    console.error("Erro ao processar ficheiro CSV:", e);
+                    loadingMessage.classList.add('hidden');
+                    errorMessage.classList.remove('hidden');
+                    errorMessage.textContent = 'Erro ao processar ficheiro CSV. Verifique o formato.';
+                }
+            };
+            reader.onerror = (error) => {
+                console.error("Erro ao ler ficheiro CSV:", error);
+                loadingMessage.classList.add('hidden');
+                errorMessage.classList.remove('hidden');
+                errorMessage.textContent = 'Erro ao ler ficheiro CSV.';
+            };
+            reader.readAsText(file);
+        }
+
+
         // Evento para o botão de filtro
         filterBtn.addEventListener('click', async () => {
             const startDate = startDateInput.value;
@@ -225,12 +278,28 @@
             }
         });
 
-        // Carrega os dados iniciais ao carregar a página
+        // Evento para o botão "Mostrar Todos os Dados"
+        resetFilterBtn.addEventListener('click', async () => {
+            startDateInput.value = ''; // Limpa os inputs de data
+            endDateInput.value = '';
+            const data = await fetchDecibelData(); // Busca sem filtros
+            if (data) {
+                renderChart(data);
+            }
+        });
+
+        // Evento para o input de ficheiro CSV
+        csvFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                processCsvFile(file);
+            }
+        });
+
+        // Carrega os dados iniciais ao carregar a página (todos os dados da base de dados)
         document.addEventListener('DOMContentLoaded', async () => {
-            setInitialDateRange(); // Define o range de datas inicial
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            const data = await fetchDecibelData(startDate, endDate);
+            // Não define range inicial aqui para mostrar todos os dados
+            const data = await fetchDecibelData();
             if (data) {
                 renderChart(data);
             }
