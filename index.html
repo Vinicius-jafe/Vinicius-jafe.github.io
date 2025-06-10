@@ -9,7 +9,8 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
+            background-color: #f3f4f6; /* Fundo cinza claro */
+            color: #333;
         }
         .container {
             max-width: 1200px;
@@ -25,7 +26,7 @@
         }
         canvas {
             max-width: 100%;
-            height: auto; /* Ensures responsiveness */
+            height: auto; /* Garante responsividade */
         }
     </style>
     <!-- Chart.js CDN -->
@@ -40,58 +41,77 @@
             Dashboard de Análise de Decibéis
         </h1>
 
+        <!-- Seção de Dados Históricos -->
         <div class="card">
-            <h2 class="text-xl font-semibold mb-4">Filtrar Dados por Período da Base de Dados</h2>
+            <h2 class="text-xl font-semibold mb-4">Análise de Dados Históricos da Base de Dados</h2>
+            <p class="text-sm text-gray-600 mb-4">Selecione um período específico para visualizar dados antigos ou carregue um ficheiro CSV para análise temporária.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label for="startDate" class="block text-sm font-medium text-gray-700">Data e Hora de Início:</label>
-                    <input type="datetime-local" id="startDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2">
+                    <label for="historicalStartDate" class="block text-sm font-medium text-gray-700">Data e Hora de Início:</label>
+                    <input type="datetime-local" id="historicalStartDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2">
                 </div>
                 <div>
-                    <label for="endDate" class="block text-sm font-medium text-gray-700">Data e Hora de Fim:</label>
-                    <input type="datetime-local" id="endDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2">
+                    <label for="historicalEndDate" class="block text-sm font-medium text-gray-700">Data e Hora de Fim:</label>
+                    <input type="datetime-local" id="historicalEndDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2">
                 </div>
             </div>
-            <button id="filterBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                Aplicar Filtro
-            </button>
-            <button id="resetFilterBtn" class="w-full mt-2 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out">
-                Mostrar Todos os Dados
-            </button>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <button id="filterHistoricalBtn" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                    Aplicar Filtro Histórico
+                </button>
+                <button id="resetHistoricalFilterBtn" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out">
+                    Mostrar Todos os Dados Históricos
+                </button>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold mb-2">Carregar Ficheiro CSV</h3>
+                <p class="text-sm text-gray-600 mb-2">Selecione um ficheiro CSV para visualizar os dados no gráfico histórico. (Os dados do CSV não serão guardados na base de dados.)</p>
+                <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none p-2">
+            </div>
+
+            <h2 class="text-xl font-semibold mt-8 mb-4">Gráfico de Dados Históricos</h2>
+            <canvas id="historicalChart"></canvas>
+            <p id="historicalLoadingMessage" class="text-center text-gray-500 mt-4 hidden">A carregar dados históricos...</p>
+            <p id="historicalErrorMessage" class="text-center text-red-500 mt-4 hidden">Erro ao carregar dados históricos.</p>
+            <p id="historicalNoDataMessage" class="text-center text-gray-500 mt-4 hidden">Nenhum dado histórico encontrado para o período selecionado ou no ficheiro CSV.</p>
         </div>
 
-        <div class="card">
-            <h2 class="text-xl font-semibold mb-4">Analisar Ficheiro CSV</h2>
-            <p class="text-sm text-gray-600 mb-2">Selecione um ficheiro CSV para visualizar os dados no gráfico. (Os dados do CSV não serão guardados na base de dados.)</p>
-            <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none">
-        </div>
-
-        <div class="card">
-            <h2 class="text-xl font-semibold mb-4">Gráfico de Decibéis ao Longo do Tempo</h2>
-            <canvas id="decibelChart"></canvas>
-            <p id="loadingMessage" class="text-center text-gray-500 mt-4 hidden">A carregar dados...</p>
-            <p id="errorMessage" class="text-center text-red-500 mt-4 hidden">Erro ao carregar dados. Verifique o URL do backend e se está a funcionar.</p>
-            <p id="noDataMessage" class="text-center text-gray-500 mt-4 hidden">Nenhum dado encontrado para o período selecionado ou no ficheiro CSV.</p>
+        <!-- Seção de Dados em Tempo Real -->
+        <div class="card mt-8">
+            <h2 class="text-xl font-semibold mb-4">Dados em Tempo Real</h2>
+            <p class="text-sm text-gray-600 mb-4">Este gráfico é atualizado automaticamente a cada 5 segundos com os dados mais recentes.</p>
+            <canvas id="realtimeChart"></canvas>
+            <p id="realtimeLoadingMessage" class="text-center text-gray-500 mt-4 hidden">A carregar dados em tempo real...</p>
+            <p id="realtimeErrorMessage" class="text-center text-red-500 mt-4 hidden">Erro ao carregar dados em tempo real.</p>
+            <p id="realtimeNoDataMessage" class="text-center text-gray-500 mt-4 hidden">Nenhum dado em tempo real encontrado.</p>
         </div>
     </div>
 
     <script>
-        // Referências aos elementos HTML
-        const startDateInput = document.getElementById('startDate');
-        const endDateInput = document.getElementById('endDate');
-        const filterBtn = document.getElementById('filterBtn');
-        const resetFilterBtn = document.getElementById('resetFilterBtn');
+        // Referências aos elementos HTML - Históricos
+        const historicalStartDateInput = document.getElementById('historicalStartDate');
+        const historicalEndDateInput = document.getElementById('historicalEndDate');
+        const filterHistoricalBtn = document.getElementById('filterHistoricalBtn');
+        const resetHistoricalFilterBtn = document.getElementById('resetHistoricalFilterBtn');
         const csvFileInput = document.getElementById('csvFileInput');
-        const decibelChartCanvas = document.getElementById('decibelChart');
-        const loadingMessage = document.getElementById('loadingMessage');
-        const errorMessage = document.getElementById('errorMessage');
-        const noDataMessage = document.getElementById('noDataMessage');
+        const historicalChartCanvas = document.getElementById('historicalChart');
+        const historicalLoadingMessage = document.getElementById('historicalLoadingMessage');
+        const historicalErrorMessage = document.getElementById('historicalErrorMessage');
+        const historicalNoDataMessage = document.getElementById('historicalNoDataMessage');
 
-        let decibelChart; // Variável para armazenar a instância do gráfico
+        // Referências aos elementos HTML - Tempo Real
+        const realtimeChartCanvas = document.getElementById('realtimeChart');
+        const realtimeLoadingMessage = document.getElementById('realtimeLoadingMessage');
+        const realtimeErrorMessage = document.getElementById('realtimeErrorMessage');
+        const realtimeNoDataMessage = document.getElementById('realtimeNoDataMessage');
+
+        let historicalChart; // Instância do gráfico histórico
+        let realtimeChart;   // Instância do gráfico em tempo real
 
         // URL base do seu backend Flask (IMPORTANTE: substitua pelo URL do seu backend hospedado!)
-        // Exemplo: 'https://seu-servico-flask.onrender.com'
-        const API_BASE_URL = 'https://3000-firebase-iotlunar-1748815570790.cluster-iesosxm5fzdewqvhlwn5qivgry.cloudworkstations.dev/api/decibeis';
+        const API_BASE_URL = 'https://3000-firebase-iotlunar-1748815570790.cluster-iesosxm5fzdewqvhlwn5qivgry.cloudworkstations.dev';
+        const REALTIME_REFRESH_INTERVAL = 5000; // 5 segundos
 
         // Função para formatar a data para o input datetime-local (formato YYYY-MM-DDTHH:MM)
         function formatDatetimeLocal(date) {
@@ -107,11 +127,17 @@
         }
 
         // Função para buscar os dados da API
-        async function fetchDecibelData(startDate = '', endDate = '') {
-            loadingMessage.classList.remove('hidden');
-            errorMessage.classList.add('hidden');
-            noDataMessage.classList.add('hidden');
-            decibelChartCanvas.classList.add('hidden'); // Esconde o canvas enquanto carrega
+        async function fetchDecibelData(startDate = '', endDate = '', chartType = 'historical') {
+            const loadingMsg = chartType === 'historical' ? historicalLoadingMessage : realtimeLoadingMessage;
+            const errorMsg = chartType === 'historical' ? historicalErrorMessage : realtimeErrorMessage;
+            const canvas = chartType === 'historical' ? historicalChartCanvas : realtimeChartCanvas;
+
+            loadingMsg.classList.remove('hidden');
+            errorMsg.classList.add('hidden');
+            if (chartType === 'historical') historicalNoDataMessage.classList.add('hidden');
+            else realtimeNoDataMessage.classList.add('hidden');
+
+            canvas.classList.add('hidden'); // Esconde o canvas enquanto carrega
 
             let url = `${API_BASE_URL}/api/decibeis`;
             const params = new URLSearchParams();
@@ -135,34 +161,36 @@
                 const data = await response.json();
                 return data;
             } catch (error) {
-                console.error("Erro ao buscar dados da API:", error);
-                errorMessage.classList.remove('hidden');
+                console.error(`Erro ao buscar dados da API (${chartType}):`, error);
+                errorMsg.classList.remove('hidden');
                 return null;
             } finally {
-                loadingMessage.classList.add('hidden');
+                loadingMsg.classList.add('hidden');
             }
         }
 
-        // Função para renderizar o gráfico usando Chart.js
-        function renderChart(data, label = 'Nível de Decibéis (dB)') {
+        // Função para renderizar um gráfico usando Chart.js
+        function renderChart(canvasElement, chartInstance, data, label = 'Nível de Decibéis (dB)') {
             // Destrói o gráfico existente se houver um
-            if (decibelChart) {
-                decibelChart.destroy();
+            if (chartInstance) {
+                chartInstance.destroy();
             }
+
+            const noDataMsg = canvasElement === historicalChartCanvas ? historicalNoDataMessage : realtimeNoDataMessage;
 
             if (!data || data.length === 0) {
-                noDataMessage.classList.remove('hidden');
-                decibelChartCanvas.classList.add('hidden');
-                return;
+                noDataMsg.classList.remove('hidden');
+                canvasElement.classList.add('hidden');
+                return null; // Retorna null para indicar que nenhum gráfico foi criado
             }
 
-            noDataMessage.classList.add('hidden');
-            decibelChartCanvas.classList.remove('hidden');
+            noDataMsg.classList.add('hidden');
+            canvasElement.classList.remove('hidden');
 
             const labels = data.map(item => new Date(item.data)); // Datas para o eixo X
             const values = data.map(item => item.valor); // Valores para o eixo Y
 
-            decibelChart = new Chart(decibelChartCanvas, {
+            const newChartInstance = new Chart(canvasElement, {
                 type: 'line',
                 data: {
                     labels: labels,
@@ -176,17 +204,17 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Permite que o gráfico se ajuste melhor ao contêiner
+                    maintainAspectRatio: false,
                     scales: {
                         x: {
-                            type: 'time', // Usar tipo 'time' para datas
+                            type: 'time',
                             time: {
-                                unit: 'minute', // Adapta a unidade de tempo automaticamente (pode ser 'hour', 'day', etc.)
+                                unit: 'minute',
                                 displayFormats: {
                                     minute: 'HH:mm',
                                     hour: 'HH:mm',
                                     day: 'MMM dd',
-                                    month: 'MMM yyyy'
+                                    month: 'MMM'
                                 }
                             },
                             title: {
@@ -206,7 +234,6 @@
                         tooltip: {
                             callbacks: {
                                 title: function(context) {
-                                    // Formata o título do tooltip para mostrar a data e hora completas
                                     const date = new Date(context[0].label);
                                     return date.toLocaleString('pt-BR');
                                 }
@@ -215,80 +242,80 @@
                     }
                 }
             });
+            return newChartInstance; // Retorna a nova instância do gráfico
         }
 
         // Função para processar o ficheiro CSV
         function processCsvFile(file) {
-            loadingMessage.classList.remove('hidden');
-            errorMessage.classList.add('hidden');
-            noDataMessage.classList.add('hidden');
-            decibelChartCanvas.classList.add('hidden');
+            historicalLoadingMessage.classList.remove('hidden');
+            historicalErrorMessage.classList.add('hidden');
+            historicalNoDataMessage.classList.add('hidden');
+            historicalChartCanvas.classList.add('hidden');
 
             const reader = new FileReader();
             reader.onload = (event) => {
                 try {
                     const csvContent = event.target.result;
-                    const lines = csvContent.split('\n').filter(line => line.trim() !== ''); // Filtra linhas vazias
+                    const lines = csvContent.split('\n').filter(line => line.trim() !== '');
                     const parsedData = [];
 
                     lines.forEach(line => {
                         // Regex para extrair valor e datetime (adaptado do seu backend)
-                        const match = line.match(/(\d+)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
-                        if (match && match.length >= 3) { // Deve ter pelo menos 3 grupos (o valor, a data, a hora)
+                        // Ajustado para capturar a data e hora corretamente mesmo com valores de decibel de 1, 2 ou 3 dígitos.
+                        const match = line.match(/^(\d+)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})$/);
+                        if (match && match.length === 3) {
                             const value = parseFloat(match[1]);
-                            const dateTime = match[2]; // ex: 2025-06-05 19:59:49
+                            const dateTime = match[2];
                             parsedData.push({ valor: value, data: dateTime });
+                        } else {
+                            console.warn("Linha CSV com formato inválido ignorada:", line);
                         }
                     });
 
-                    // Ordena os dados pela data
                     parsedData.sort((a, b) => new Date(a.data) - new Date(b.data));
 
-                    loadingMessage.classList.add('hidden');
+                    historicalLoadingMessage.classList.add('hidden');
                     if (parsedData.length > 0) {
-                        renderChart(parsedData, 'Dados do Ficheiro CSV (dB)');
+                        historicalChart = renderChart(historicalChartCanvas, historicalChart, parsedData, 'Dados do Ficheiro CSV (dB)');
                     } else {
-                        noDataMessage.classList.remove('hidden');
+                        historicalNoDataMessage.classList.remove('hidden');
                         console.warn("Nenhum dado válido encontrado no ficheiro CSV.");
                     }
                 } catch (e) {
                     console.error("Erro ao processar ficheiro CSV:", e);
-                    loadingMessage.classList.add('hidden');
-                    errorMessage.classList.remove('hidden');
-                    errorMessage.textContent = 'Erro ao processar ficheiro CSV. Verifique o formato.';
+                    historicalLoadingMessage.classList.add('hidden');
+                    historicalErrorMessage.classList.remove('hidden');
+                    historicalErrorMessage.textContent = 'Erro ao processar ficheiro CSV. Verifique o formato.';
                 }
             };
             reader.onerror = (error) => {
                 console.error("Erro ao ler ficheiro CSV:", error);
-                loadingMessage.classList.add('hidden');
-                errorMessage.classList.remove('hidden');
-                errorMessage.textContent = 'Erro ao ler ficheiro CSV.';
+                historicalLoadingMessage.classList.add('hidden');
+                historicalErrorMessage.classList.remove('hidden');
+                historicalErrorMessage.textContent = 'Erro ao ler ficheiro CSV.';
             };
             reader.readAsText(file);
         }
 
-
-        // Evento para o botão de filtro
-        filterBtn.addEventListener('click', async () => {
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            const data = await fetchDecibelData(startDate, endDate);
+        // --- Event Listeners para o Gráfico Histórico ---
+        filterHistoricalBtn.addEventListener('click', async () => {
+            const startDate = historicalStartDateInput.value;
+            const endDate = historicalEndDateInput.value;
+            const data = await fetchDecibelData(startDate, endDate, 'historical');
             if (data) {
-                renderChart(data);
+                historicalChart = renderChart(historicalChartCanvas, historicalChart, data, 'Nível de Decibéis (Histórico)');
             }
         });
 
-        // Evento para o botão "Mostrar Todos os Dados"
-        resetFilterBtn.addEventListener('click', async () => {
-            startDateInput.value = ''; // Limpa os inputs de data
-            endDateInput.value = '';
-            const data = await fetchDecibelData(); // Busca sem filtros
+        resetHistoricalFilterBtn.addEventListener('click', async () => {
+            historicalStartDateInput.value = '';
+            historicalEndDateInput.value = '';
+            const data = await fetchDecibelData('', '', 'historical');
             if (data) {
-                renderChart(data);
+                historicalChart = renderChart(historicalChartCanvas, historicalChart, data, 'Nível de Decibéis (Todos os Dados Históricos)');
             }
         });
 
-        // Evento para o input de ficheiro CSV
         csvFileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
@@ -296,13 +323,25 @@
             }
         });
 
-        // Carrega os dados iniciais ao carregar a página (todos os dados da base de dados)
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Não define range inicial aqui para mostrar todos os dados
-            const data = await fetchDecibelData();
+        // --- Funções para o Gráfico em Tempo Real ---
+        async function updateRealtimeChart() {
+            const data = await fetchDecibelData('', '', 'realtime'); // Busca todos os dados mais recentes
             if (data) {
-                renderChart(data);
+                realtimeChart = renderChart(realtimeChartCanvas, realtimeChart, data, 'Nível de Decibéis (Tempo Real)');
             }
+        }
+
+        // --- Carregamento Inicial e Atualizações ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Carrega dados históricos (todos) ao iniciar
+            const historicalData = await fetchDecibelData('', '', 'historical');
+            if (historicalData) {
+                historicalChart = renderChart(historicalChartCanvas, historicalChart, historicalData, 'Nível de Decibéis (Todos os Dados Históricos)');
+            }
+
+            // Inicia a atualização automática do gráfico em tempo real
+            updateRealtimeChart(); // Carrega a primeira vez
+            setInterval(updateRealtimeChart, REALTIME_REFRESH_INTERVAL); // Atualiza a cada 5 segundos
         });
     </script>
 </body>
