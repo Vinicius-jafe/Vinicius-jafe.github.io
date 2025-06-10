@@ -109,11 +109,13 @@
         let historicalChart; // Instância do gráfico histórico
         let realtimeChart;   // Instância do gráfico em tempo real
 
-        // URL base do seu backend Flask (IMPORTANTE: substitua pelo URL do seu backend hospedado!)
-        const API_BASE_URL = 'https://3000-firebase-iotlunar-1748815570790.cluster-iesosxm5fzdewqvhlwn5qivgry.cloudworkstations.dev/api/decibeis"';
+        // URL COMPLETO do endpoint da API de decibéis do seu backend Flask.
+        // Já inclui o caminho '/api/decibeis'.
+        // ESTE URL DEVE SER EXATAMENTE O QUE FUNCIONA COM O CURL!
+        const API_ENDPOINT_URL = 'https://3000-firebase-iotlunar-1748815570790.cluster-iesosxm5fzdewqvhlwn5qivgry.cloudworkstations.dev/api/decibeis';
         const REALTIME_REFRESH_INTERVAL = 5000; // 5 segundos
 
-        // Função para formatar a data para o input datetime-local (formato YYYY-MM-DDTHH:MM)
+        // Função para formatar a data para o input datetime-local (formato ISO 8601)
         function formatDatetimeLocal(date) {
             if (!(date instanceof Date)) {
                 date = new Date(date);
@@ -139,7 +141,8 @@
 
             canvas.classList.add('hidden'); // Esconde o canvas enquanto carrega
 
-            let url = `${API_BASE_URL}/api/decibeis`;
+            // Usar o URL completo diretamente
+            let url = new URL(API_ENDPOINT_URL); // Cria um objeto URL a partir do seu endpoint completo
             const params = new URLSearchParams();
 
             if (startDate) {
@@ -149,12 +152,16 @@
                 params.append('endDate', endDate);
             }
 
-            if (params.toString()) {
-                url += `?${params.toString()}`;
-            }
+            url.search = params.toString(); // Adiciona os parâmetros de query ao URL
+
+            const finalUrl = url.href; // O URL completo que será usado na requisição
+
+            // --- MENSAGEM DE DEPURAR (VÊ ISTO NO CONSOLE DO NAVEGADOR) ---
+            console.log(`A tentar buscar dados para o gráfico ${chartType} de: ${finalUrl}`);
+            // --- FIM DA MENSAGEM DE DEPURAR ---
 
             try {
-                const response = await fetch(url);
+                const response = await fetch(finalUrl);
                 if (!response.ok) {
                     throw new Error(`Erro HTTP! Status: ${response.status}`);
                 }
