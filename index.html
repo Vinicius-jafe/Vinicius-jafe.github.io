@@ -3,30 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Análise de Decibéis</title>
+    <title>Monitoramento de Decibéis</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Fundo cinza claro */
-            color: #333;
+        /* Variáveis CSS para cores do modo escuro */
+        :root {
+            --bg-light: #e0f2f7; /* Fundo claro padrão */
+            --text-light: #000000;
+            --primary-light: #00838f; /* Cor primária clara */
+            --card-bg-light: #ffffff;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --button-bg-light: #00838f;
+            --button-text-light: #ffffff;
+            --chart-text-color-light: #6b7280;
+            --chart-grid-color-light: rgba(200, 200, 200, 0.2);
+            --status-green-light: #008000;
+            --status-red-light: #dc2626;
+            --status-orange-light: #f97316;
+            --input-border-light: #d1d5db;
+            --input-bg-light: #ffffff;
         }
+
+        html.dark {
+            --bg-light: #1a202c; /* Fundo escuro */
+            --text-light: #e2e8f0;
+            --primary-light: #4fd1c5; /* Cor primária escura, um teal */
+            --card-bg-light: #2d3748;
+            --shadow-light: rgba(0, 0, 0, 0.3);
+            --button-bg-light: #4fd1c5;
+            --button-text-light: #1a202c;
+            --chart-text-color-light: #a0aec0;
+            --chart-grid-color-light: rgba(255, 255, 255, 0.1);
+            --status-green-light: #34d399;
+            --status-red-light: #ef4444;
+            --status-orange-light: #fb923c;
+            --input-border-light: #4a5568;
+            --input-bg-light: #4a5568;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 20px;
         }
+
+        /* Estilo para o botão de modo noturno */
+        #darkModeToggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: var(--button-bg-light);
+            color: var(--button-text-light);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Estilos para títulos h1, h2, h3 */
+        h1, h2, h3 {
+            color: var(--primary-light);
+            transition: color 0.3s;
+        }
+        h1 { font-size: 2.25rem; font-weight: bold; margin-bottom: 20px; }
+        h2 { font-size: 1.75rem; font-weight: bold; margin-bottom: 15px; }
+        h3 { font-size: 1.25rem; font-weight: bold; margin-bottom: 10px; }
+
+        /* Estilos dos cartões (cards) */
         .card {
-            background-color: #ffffff;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            background-color: var(--card-bg-light);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0px 2px 4px var(--shadow-light);
+            margin-bottom: 20px;
+            transition: background-color 0.3s, box-shadow 0.3s;
         }
-        canvas {
-            max-width: 100%;
-            height: auto; /* Garante responsividade */
+
+        /* Layout para os cartões de sumário */
+        .summary-cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap; /* Permite que os cartões quebrem a linha em telas menores */
+            margin-bottom: 20px;
+        }
+        .summary-card-item {
+            flex: 1 1 200px; /* Cresce e encolhe, com base mínima de 200px */
+            text-align: center;
+            padding: 15px;
+        }
+        .summary-value {
+            font-size: 2.5rem;
+            font-weight: extrabold;
+            margin-top: 5px;
+        }
+        .summary-label {
+            font-size: 0.875rem;
+            color: var(--text-light); /* Ajustado para usar variável de texto */
+        }
+        .status-message {
+            font-size: 1.125rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* Estilos para inputs de data/hora e botões */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            font-size: 0.875rem;
+            color: var(--text-light); /* Ajustado para usar variável de texto */
+        }
+        .input-group input[type="datetime-local"],
+        .input-group input[type="file"] {
+            padding: 8px 12px;
+            border: 1px solid var(--input-border-light);
+            border-radius: 5px;
+            background-color: var(--input-bg-light);
+            color: var(--text-light);
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+        }
+        .input-group input[type="datetime-local"]:focus,
+        .input-group input[type="file"]:focus {
+            outline: none;
+            border-color: #00838f; /* Cor de foco primária */
+            box-shadow: 0 0 0 1px #00838f;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .button-group button {
+            flex: 1 1 150px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .button-group .primary-button {
+            background-color: #00838f; /* Cor primária */
+            color: white;
+        }
+        .button-group .primary-button:hover {
+            background-color: #006b74;
+        }
+        .button-group .secondary-button {
+            background-color: #6b7280; /* Cinza */
+            color: white;
+        }
+        .button-group .secondary-button:hover {
+            background-color: #4b5563;
+        }
+
+        /* Contêiner do gráfico para tamanho fixo */
+        .chart-wrapper {
+            width: 80%; /* Largura inspirada no seu exemplo */
+            margin: 20px auto; /* Centraliza */
+            max-width: 800px; /* Limita a largura máxima para gráficos grandes */
+        }
+        .chart-container {
+            position: relative;
+            height: 350px; /* Altura fixa ligeiramente ajustada */
+            width: 100%;
+        }
+
+        /* Mensagens de status */
+        .message {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .message.error {
+            color: var(--status-red-light);
+        }
+        .message.no-data {
+            color: var(--text-light);
+        }
+        .message.loading {
+            color: var(--text-light);
+        }
+
+        /* Estilos específicos para o modo escuro no Chart.js via variáveis CSS */
+        /* Estas variáveis são lidas pelo JS para configurar o Chart.js */
+        html.dark body {
+            --chart-text-color: var(--text-light);
+            --chart-grid-color: rgba(255, 255, 255, 0.1);
+        }
+        body {
+            --chart-text-color: var(--chart-text-color-light);
+            --chart-grid-color: var(--chart-grid-color-light);
         }
     </style>
     <!-- Chart.js CDN -->
@@ -35,60 +217,105 @@
     <script src="https://cdn.jsdelivr.net/npm/luxon@3.x/build/global/luxon.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.x/dist/chartjs-adapter-luxon.min.js"></script>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body>
+    <button id="darkModeToggle">🌙 Modo Noturno</button>
     <div class="container">
-        <h1 class="text-3xl font-bold text-center text-gray-900 mb-8 rounded-lg p-4 bg-white shadow-md">
-            Dashboard de Análise de Decibéis
-        </h1>
+        <h1 class="primary-heading">Monitoramento de Decibéis</h1>
 
-        <!-- Seção de Dados Históricos -->
-        <div class="card">
-            <h2 class="text-xl font-semibold mb-4">Análise de Dados Históricos da Base de Dados</h2>
-            <p class="text-sm text-gray-600 mb-4">Selecione um período específico para visualizar dados antigos ou carregue um ficheiro CSV para análise temporária.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label for="historicalStartDate" class="block text-sm font-medium text-gray-700">Data e Hora de Início:</label>
-                    <input type="datetime-local" id="historicalStartDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2">
-                </div>
-                <div>
-                    <label for="historicalEndDate" class="block text-sm font-medium text-gray-700">Data e Hora de Fim:</label>
-                    <input type="datetime-local" id="historicalEndDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2">
+        <h2 class="primary-heading">Visão Geral</h2>
+        <!-- Seção de Sumário (Visão Geral) - Inspirada nos cartões do seu exemplo -->
+        <div class="summary-cards">
+            <!-- Cartão de Leitura Atual -->
+            <div class="card summary-card-item">
+                <h3 class="primary-heading">Nível de Decibéis Atual</h3>
+                <p id="currentDecibel" class="summary-value text-blue-600 dark:text-blue-400">--</p>
+                <p class="summary-label">dB / 3</p>
+                <p id="statusMessage" class="status-message text-green-600 dark:text-green-400">Sem dados</p>
+            </div>
+
+            <!-- Cartão de Estatísticas da Última Hora -->
+            <div class="card summary-card-item col-span-3"> <!-- Ocupa mais espaço para 3 estatísticas -->
+                <h3 class="primary-heading">Estatísticas (Últimos 30 Minutos)</h3>
+                <div class="grid grid-cols-3 gap-2 text-center mt-4">
+                    <div>
+                        <p class="summary-label">Média</p>
+                        <p id="avgLastHour" class="text-2xl font-bold text-green-600 dark:text-green-400">--</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">dB / 3</p>
+                    </div>
+                    <div>
+                        <p class="summary-label">Mínimo</p>
+                        <p id="minLastHour" class="text-2xl font-bold text-red-600 dark:text-red-400">--</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">dB / 3</p>
+                    </div>
+                    <div>
+                        <p class="summary-label">Máximo</p>
+                        <p id="maxLastHour" class="text-2xl font-bold text-purple-600 dark:text-purple-400">--</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">dB / 3</p>
+                    </div>
                 </div>
             </div>
-            <div class="flex flex-col sm:flex-row gap-2">
-                <button id="filterHistoricalBtn" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                    Aplicar Filtro Histórico
-                </button>
-                <button id="resetHistoricalFilterBtn" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out">
-                    Mostrar Todos os Dados Históricos
-                </button>
+        </div>
+
+        <h2 class="primary-heading">Gráfico de Linha do Consumo</h2>
+        <!-- Seção de Dados em Tempo Real -->
+        <div class="card">
+            <h3 class="text-xl font-semibold primary-heading">Dados em Tempo Real (Últimos 30 Minutos)</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Este gráfico é atualizado automaticamente a cada 5 segundos com os dados mais recentes.</p>
+            <div class="chart-wrapper">
+                <div class="chart-container">
+                    <canvas id="realtimeChart"></canvas>
+                </div>
+            </div>
+            <p id="realtimeLoadingMessage" class="message loading hidden">A carregar dados em tempo real...</p>
+            <p id="realtimeErrorMessage" class="message error hidden">Erro ao carregar dados em tempo real.</p>
+            <p id="realtimeNoDataMessage" class="message no-data hidden">Nenhum dado em tempo real encontrado.</p>
+        </div>
+
+        <!-- Seção de Dados Históricos -->
+        <div class="card mt-8">
+            <h3 class="text-xl font-semibold primary-heading">Análise de Dados Históricos</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Selecione um período específico para visualizar dados antigos ou carregue um ficheiro CSV para análise temporária.</p>
+            <div class="input-group">
+                <label for="historicalStartDate">Data e Hora de Início:</label>
+                <input type="datetime-local" id="historicalStartDate">
+            </div>
+            <div class="input-group">
+                <label for="historicalEndDate">Data e Hora de Fim:</label>
+                <input type="datetime-local" id="historicalEndDate">
+            </div>
+            <div class="button-group">
+                <button id="filterHistoricalBtn" class="primary-button">Aplicar Filtro Histórico</button>
+                <button id="resetHistoricalFilterBtn" class="secondary-button">Mostrar Todos os Dados Históricos</button>
             </div>
 
             <div class="mt-6">
-                <h3 class="text-lg font-semibold mb-2">Carregar Ficheiro CSV</h3>
-                <p class="text-sm text-gray-600 mb-2">Selecione um ficheiro CSV para visualizar os dados no gráfico histórico. (Os dados do CSV não serão guardados na base de dados.)</p>
-                <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none p-2">
+                <h3 class="text-lg font-semibold primary-heading">Carregar Ficheiro CSV</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Selecione um ficheiro CSV para visualizar os dados no gráfico histórico. (Os dados do CSV não serão guardados na base de dados.)</p>
+                <div class="input-group">
+                    <input type="file" id="csvFileInput" accept=".csv">
+                </div>
             </div>
 
-            <h2 class="text-xl font-semibold mt-8 mb-4">Gráfico de Dados Históricos</h2>
-            <canvas id="historicalChart"></canvas>
-            <p id="historicalLoadingMessage" class="text-center text-gray-500 mt-4 hidden">A carregar dados históricos...</p>
-            <p id="historicalErrorMessage" class="text-center text-red-500 mt-4 hidden">Erro ao carregar dados históricos.</p>
-            <p id="historicalNoDataMessage" class="text-center text-gray-500 mt-4 hidden">Nenhum dado histórico encontrado para o período selecionado ou no ficheiro CSV.</p>
-        </div>
-
-        <!-- Seção de Dados em Tempo Real -->
-        <div class="card mt-8">
-            <h2 class="text-xl font-semibold mb-4">Dados em Tempo Real</h2>
-            <p class="text-sm text-gray-600 mb-4">Este gráfico é atualizado automaticamente a cada 5 segundos com os dados mais recentes.</p>
-            <canvas id="realtimeChart"></canvas>
-            <p id="realtimeLoadingMessage" class="text-center text-gray-500 mt-4 hidden">A carregar dados em tempo real...</p>
-            <p id="realtimeErrorMessage" class="text-center text-red-500 mt-4 hidden">Erro ao carregar dados em tempo real.</p>
-            <p id="realtimeNoDataMessage" class="text-center text-gray-500 mt-4 hidden">Nenhum dado em tempo real encontrado.</p>
+            <h3 class="text-xl font-semibold primary-heading mt-8">Gráfico de Dados Históricos</h3>
+            <div class="chart-wrapper">
+                <div class="chart-container">
+                    <canvas id="historicalChart"></canvas>
+                </div>
+            </div>
+            <p id="historicalLoadingMessage" class="message loading hidden">A carregar dados históricos...</p>
+            <p id="historicalErrorMessage" class="message error hidden">Erro ao carregar dados históricos.</p>
+            <p id="historicalNoDataMessage" class="message no-data hidden">Nenhum dado histórico encontrado para o período selecionado ou no ficheiro CSV.</p>
         </div>
     </div>
 
     <script>
+        // Referências aos elementos HTML - Sumário
+        const currentDecibelSpan = document.getElementById('currentDecibel');
+        const avgLastHourSpan = document.getElementById('avgLastHour');
+        const minLastHourSpan = document.getElementById('minLastHour');
+        const maxLastHourSpan = document.getElementById('maxLastHour');
+        const statusMessageSpan = document.getElementById('statusMessage');
+
         // Referências aos elementos HTML - Históricos
         const historicalStartDateInput = document.getElementById('historicalStartDate');
         const historicalEndDateInput = document.getElementById('historicalEndDate');
@@ -106,12 +333,13 @@
         const realtimeErrorMessage = document.getElementById('realtimeErrorMessage');
         const realtimeNoDataMessage = document.getElementById('realtimeNoDataMessage');
 
+        // Referência para o botão de Dark Mode
+        const darkModeToggle = document.getElementById('darkModeToggle');
+
         let historicalChart; // Instância do gráfico histórico
         let realtimeChart;   // Instância do gráfico em tempo real
 
         // URL COMPLETO do endpoint da API de decibéis do seu backend Flask.
-        // Já inclui o caminho '/api/decibeis'.
-        // ESTE URL DEVE SER EXATAMENTE O QUE FUNCIONA COM O CURL!
         const API_ENDPOINT_URL = 'https://3000-firebase-iotlunar-1748815570790.cluster-iesosxm5fzdewqvhlwn5qivgry.cloudworkstations.dev/api/decibeis';
         const REALTIME_REFRESH_INTERVAL = 5000; // 5 segundos
 
@@ -141,8 +369,7 @@
 
             canvas.classList.add('hidden'); // Esconde o canvas enquanto carrega
 
-            // Usar o URL completo diretamente
-            let url = new URL(API_ENDPOINT_URL); // Cria um objeto URL a partir do seu endpoint completo
+            let url = new URL(API_ENDPOINT_URL);
             const params = new URLSearchParams();
 
             if (startDate) {
@@ -152,13 +379,12 @@
                 params.append('endDate', endDate);
             }
 
-            url.search = params.toString(); // Adiciona os parâmetros de query ao URL
+            url.search = params.toString();
 
-            const finalUrl = url.href; // O URL completo que será usado na requisição
+            const finalUrl = url.href;
 
-            // --- MENSAGEM DE DEPURAR (VÊ ISTO NO CONSOLE DO NAVEGADOR) ---
-            console.log(`A tentar buscar dados para o gráfico ${chartType} de: ${finalUrl}`);
-            // --- FIM DA MENSAGEM DE DEPURAR ---
+            console.log(`[${chartType}] A tentar buscar dados de: ${finalUrl}`); // Log de depuração
+            console.log(`[${chartType}] Start Date: ${startDate}, End Date: ${endDate}`); // Log de depuração de datas
 
             try {
                 const response = await fetch(finalUrl);
@@ -166,9 +392,10 @@
                     throw new Error(`Erro HTTP! Status: ${response.status}`);
                 }
                 const data = await response.json();
+                console.log(`[${chartType}] Dados recebidos (${data.length} registros):`, data); // Log de depuração dos dados
                 return data;
             } catch (error) {
-                console.error(`Erro ao buscar dados da API (${chartType}):`, error);
+                console.error(`[${chartType}] Erro ao buscar dados da API:`, error);
                 errorMsg.classList.remove('hidden');
                 return null;
             } finally {
@@ -178,7 +405,6 @@
 
         // Função para renderizar um gráfico usando Chart.js
         function renderChart(canvasElement, chartInstance, data, label = 'Nível de Decibéis (dB)') {
-            // Destrói o gráfico existente se houver um
             if (chartInstance) {
                 chartInstance.destroy();
             }
@@ -188,14 +414,14 @@
             if (!data || data.length === 0) {
                 noDataMsg.classList.remove('hidden');
                 canvasElement.classList.add('hidden');
-                return null; // Retorna null para indicar que nenhum gráfico foi criado
+                return null;
             }
 
             noDataMsg.classList.add('hidden');
             canvasElement.classList.remove('hidden');
 
-            const labels = data.map(item => new Date(item.data)); // Datas para o eixo X
-            const values = data.map(item => item.valor); // Valores para o eixo Y
+            const labels = data.map(item => new Date(item.data));
+            const values = data.map(item => item.valor / 3);
 
             const newChartInstance = new Chart(canvasElement, {
                 type: 'line',
@@ -205,13 +431,19 @@
                         label: label,
                         data: values,
                         borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
                         tension: 0.1,
-                        fill: false
+                        fill: false,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: {
+                        duration: 500
+                    },
                     scales: {
                         x: {
                             type: 'time',
@@ -222,18 +454,35 @@
                                     hour: 'HH:mm',
                                     day: 'MMM dd',
                                     month: 'MMM'
-                                }
+                                },
+                                tooltipFormat: 'dd MMM yyyy HH:mm:ss'
                             },
                             title: {
                                 display: true,
-                                text: 'Data e Hora'
+                                text: 'Data e Hora',
+                                font: { size: 14, weight: 'bold' },
+                                color: 'var(--chart-text-color)'
+                            },
+                            ticks: {
+                                color: 'var(--chart-text-color)'
+                            },
+                            grid: {
+                                color: 'var(--chart-grid-color)'
                             }
                         },
                         y: {
                             beginAtZero: false,
                             title: {
                                 display: true,
-                                text: 'Decibéis (dB)'
+                                text: 'Decibéis (dB / 3)',
+                                font: { size: 14, weight: 'bold' },
+                                color: 'var(--chart-text-color)'
+                            },
+                            ticks: {
+                                color: 'var(--chart-text-color)'
+                            },
+                            grid: {
+                                color: 'var(--chart-grid-color)'
                             }
                         }
                     },
@@ -241,15 +490,28 @@
                         tooltip: {
                             callbacks: {
                                 title: function(context) {
-                                    const date = new Date(context[0].label);
+                                    const date = new Date(context[0].parsed.x);
                                     return date.toLocaleString('pt-BR');
+                                },
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} dB`;
                                 }
+                            },
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            bodyColor: '#fff',
+                            titleColor: '#fff',
+                            borderColor: '#fff',
+                            borderWidth: 1
+                        },
+                        legend: {
+                            labels: {
+                                color: 'var(--chart-text-color)'
                             }
                         }
                     }
                 }
             });
-            return newChartInstance; // Retorna a nova instância do gráfico
+            return newChartInstance;
         }
 
         // Função para processar o ficheiro CSV
@@ -267,11 +529,9 @@
                     const parsedData = [];
 
                     lines.forEach(line => {
-                        // Regex para extrair valor e datetime (adaptado do seu backend)
-                        // Ajustado para capturar a data e hora corretamente mesmo com valores de decibel de 1, 2 ou 3 dígitos.
-                        const match = line.match(/^(\d+)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})$/);
-                        if (match && match.length === 3) {
-                            const value = parseFloat(match[1]);
+                        const match = line.match(/(\d+\.?\d*)[, ]?(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
+                        if (match && match.length >= 3) {
+                            const value = parseFloat(match[1].replace(',', '.'));
                             const dateTime = match[2];
                             parsedData.push({ valor: value, data: dateTime });
                         } else {
@@ -283,7 +543,7 @@
 
                     historicalLoadingMessage.classList.add('hidden');
                     if (parsedData.length > 0) {
-                        historicalChart = renderChart(historicalChartCanvas, historicalChart, parsedData, 'Dados do Ficheiro CSV (dB)');
+                        historicalChart = renderChart(historicalChartCanvas, historicalChart, parsedData, 'Dados do Ficheiro CSV (dB / 3)');
                     } else {
                         historicalNoDataMessage.classList.remove('hidden');
                         console.warn("Nenhum dado válido encontrado no ficheiro CSV.");
@@ -299,9 +559,72 @@
                 console.error("Erro ao ler ficheiro CSV:", error);
                 historicalLoadingMessage.classList.add('hidden');
                 historicalErrorMessage.classList.remove('hidden');
-                historicalErrorMessage.textContent = 'Erro ao ler ficheiro CSV.';
+                errorMessage.textContent = 'Erro ao ler ficheiro CSV.';
             };
             reader.readAsText(file);
+        }
+
+        // --- Funções para o Gráfico em Tempo Real e Sumário ---
+        async function updateRealtimeChartAndSummary() {
+            console.log("updateRealtimeChartAndSummary: A ser executada."); // Log de execução
+            const now = new Date();
+            const thirtyMinutesAgo = new Date(now.getTime() - (30 * 60 * 1000));
+
+            const startDate = formatDatetimeLocal(thirtyMinutesAgo);
+            const endDate = formatDatetimeLocal(now);
+
+            const data = await fetchDecibelData(startDate, endDate, 'realtime');
+
+            if (data) {
+                console.log("[realtime] Dados recebidos para atualização:", data); // Log de dados para realtime
+                realtimeChart = renderChart(realtimeChartCanvas, realtimeChart, data, 'Nível de Decibéis (Tempo Real / 3)');
+                updateSummaryCards(data);
+            } else {
+                console.log("[realtime] Nenhum dado recebido ou erro, limpando cartões."); // Log de nenhum dado
+                updateSummaryCards([]);
+            }
+        }
+
+        // Função para atualizar os cartões de sumário e a mensagem de status
+        function updateSummaryCards(data) {
+            if (!data || data.length === 0) {
+                currentDecibelSpan.textContent = '--';
+                avgLastHourSpan.textContent = '--';
+                minLastHourSpan.textContent = '--';
+                maxLastHourSpan.textContent = '--';
+                statusMessageSpan.textContent = 'Sem dados';
+                statusMessageSpan.style.color = 'var(--text-light)';
+                return;
+            }
+
+            data.sort((a, b) => new Date(a.data) - new Date(b.data));
+
+            const lastReading = (data[data.length - 1].valor / 3);
+            currentDecibelSpan.textContent = `${lastReading.toFixed(2)}`;
+
+            const values = data.map(item => item.valor / 3);
+            const sum = values.reduce((acc, val) => acc + val, 0);
+            const average = (sum / values.length);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+
+            avgLastHourSpan.textContent = `${average.toFixed(2)}`;
+            minLastHourSpan.textContent = `${min.toFixed(2)}`;
+            maxLastHourSpan.textContent = `${max.toFixed(2)}`;
+
+            let statusText = 'Normal';
+            let statusColor = 'var(--status-green-light)';
+
+            if (lastReading > 100) {
+                statusText = 'Alto!';
+                statusColor = 'var(--status-red-light)';
+            } else if (lastReading > 70) {
+                statusText = 'Elevado';
+                statusColor = 'var(--status-orange-light)';
+            }
+
+            statusMessageSpan.textContent = statusText;
+            statusMessageSpan.style.color = statusColor;
         }
 
         // --- Event Listeners para o Gráfico Histórico ---
@@ -310,7 +633,7 @@
             const endDate = historicalEndDateInput.value;
             const data = await fetchDecibelData(startDate, endDate, 'historical');
             if (data) {
-                historicalChart = renderChart(historicalChartCanvas, historicalChart, data, 'Nível de Decibéis (Histórico)');
+                historicalChart = renderChart(historicalChartCanvas, historicalChart, data, 'Nível de Decibéis (Histórico / 3)');
             }
         });
 
@@ -319,7 +642,7 @@
             historicalEndDateInput.value = '';
             const data = await fetchDecibelData('', '', 'historical');
             if (data) {
-                historicalChart = renderChart(historicalChartCanvas, historicalChart, data, 'Nível de Decibéis (Todos os Dados Históricos)');
+                historicalChart = renderChart(historicalChartCanvas, historicalChart, data, 'Nível de Decibéis (Todos os Dados Históricos / 3)');
             }
         });
 
@@ -330,25 +653,51 @@
             }
         });
 
-        // --- Funções para o Gráfico em Tempo Real ---
-        async function updateRealtimeChart() {
-            const data = await fetchDecibelData('', '', 'realtime'); // Busca todos os dados mais recentes
-            if (data) {
-                realtimeChart = renderChart(realtimeChartCanvas, realtimeChart, data, 'Nível de Decibéis (Tempo Real)');
+        // --- Dark Mode Logic ---
+        function toggleDarkMode() {
+            const htmlElement = document.documentElement;
+            if (htmlElement.classList.contains('dark')) {
+                htmlElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateChartColors();
+            updateSummaryCards(realtimeChart ? realtimeChart.data.datasets[0].data.map((val, i) => ({ valor: val * 3, data: realtimeChart.data.labels[i] })) : []);
+        }
+
+        // Função para aplicar as cores do Chart.js dinamicamente com base no tema
+        function updateChartColors() {
+            if (historicalChart) historicalChart.update();
+            if (realtimeChart) realtimeChart.update();
+        }
+
+        // Adiciona o evento de clique ao botão de Dark Mode
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+
+        // Verifica o tema salvo no localStorage ao carregar a página
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
             }
         }
 
         // --- Carregamento Inicial e Atualizações ---
         document.addEventListener('DOMContentLoaded', async () => {
-            // Carrega dados históricos (todos) ao iniciar
+            loadTheme();
+
             const historicalData = await fetchDecibelData('', '', 'historical');
             if (historicalData) {
-                historicalChart = renderChart(historicalChartCanvas, historicalChart, historicalData, 'Nível de Decibéis (Todos os Dados Históricos)');
+                historicalChart = renderChart(historicalChartCanvas, historicalChart, historicalData, 'Nível de Decibéis (Todos os Dados Históricos / 3)');
             }
 
-            // Inicia a atualização automática do gráfico em tempo real
-            updateRealtimeChart(); // Carrega a primeira vez
-            setInterval(updateRealtimeChart, REALTIME_REFRESH_INTERVAL); // Atualiza a cada 5 segundos
+            // Inicia a atualização automática do gráfico em tempo real e sumário
+            updateRealtimeChartAndSummary();
+            setInterval(updateRealtimeChartAndSummary, REALTIME_REFRESH_INTERVAL);
         });
     </script>
 </body>
